@@ -1,0 +1,208 @@
+# Security Hook L2 — CI Security Audit (GitHub Actions)
+# This standard (HARNESS-PROCESS-STANDARD.md §5.4), stage L2
+#
+# Usage:
+#   Copy this file to .github/workflows/security-audit.yml
+#   For GitLab CI, convert to .gitlab-ci.yml format (same structure)
+
+name: Security Audit (L2 Hook)
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: "0 2 * * 1"  # Scheduled scan every Monday at 02:00
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. Secret scan (gitleaks)
+  # ─────────────────────────────────────────────────────────────
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required to scan full history
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-path: hooks/gitleaks.toml
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Dependency vulnerability scan (OWASP Dependency Check)
+  # ─────────────────────────────────────────────────────────────
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "${{ github.event.repository.name }}"
+          path: "."
+          format: "HTML"
+          out: "reports"
+          args: >-
+            --enableRetired
+            --failOnCVSS 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
+
+  # ─────────────────────────────────────────────────────────────
+  # 2b. Supply chain — SBOM generation + OSS licenses + dependency pin verification
+  # ─────────────────────────────────────────────────────────────
+  supply-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM (Syft / CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+
+      - name: OSS license check (block prohibited licenses)
+        run: |
+          set -euo pipefail
+          # The project defines an ALLOWED/DENIED license policy.
+          # The build fails if a prohibited license (e.g., AGPL-3.0, SSPL, commercially incompatible) is found.
+          DENYLIST="${HARNESS_LICENSE_DENYLIST:-AGPL-3.0,SSPL-1.0,BUSL-1.1}"
+          echo "Denied licenses: ${DENYLIST}"
+          if grep -Eio "$(echo "$DENYLIST" | sed 's/,/|/g')" sbom.cyclonedx.json; then
+            echo "Prohibited OSS license found — blocking build (this standard §5.5)"
+            exit 1
+          fi
+          echo "License check PASS"
+
+      - name: Dependency pinning / lockfile verification
+        run: |
+          set -euo pipefail
+          # Checks for the presence and tampering of the lockfile (e.g., pinned versions in pom.xml / package-lock.json / poetry.lock / go.sum).
+          # The project registers the lockfile path in HARNESS_LOCKFILE.
+          LOCK="${HARNESS_LOCKFILE:-}"
+          if [ -n "$LOCK" ] && [ ! -f "$LOCK" ]; then
+            echo "Lockfile ($LOCK) missing — supply chain integrity not ensured, blocking"
+            exit 1
+          fi
+          echo "Dependency pin check complete (lockfile: ${LOCK:-not specified})"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cyclonedx.json
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. SAST (CodeQL)
+  # ─────────────────────────────────────────────────────────────
+  sast:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [java]  # Register all §5.7 organization-standard languages — e.g., [java, python, javascript, cpp]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Build (Java)
+        run: ./mvnw -q -DskipTests package
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ─────────────────────────────────────────────────────────────
+  # 4. Automated run of the security-auditor agent (Claude / Codex)
+  # ─────────────────────────────────────────────────────────────
+  security-auditor-agent:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run security-auditor agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HARNESS_AI_AUDIT_SCRIPT: ${{ vars.HARNESS_AI_AUDIT_SCRIPT }}
+          HARNESS_AI_AUDIT_CMD: ${{ vars.HARNESS_AI_AUDIT_CMD }}
+          HARNESS_AI_AUDIT_OUTPUT: security/audit-pr-${{ github.event.pull_request.number }}.md
+          HARNESS_PR_BASE_REF: ${{ github.base_ref }}
+          HARNESS_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Applies the security-auditor definition from this standard's .claude/agents/security-auditor.md.
+          # The project must register the "path to a checked-in executable script"
+          # in the HARNESS_AI_AUDIT_SCRIPT repository variable. (e.g., hooks/run-security-auditor.sh)
+          # The script uses HARNESS_PR_BASE_REF / HARNESS_PR_NUMBER / HARNESS_AI_AUDIT_OUTPUT
+          # to safely invoke the required AI CLI (Claude/Codex, etc.).
+          if [ -n "${HARNESS_AI_AUDIT_CMD:-}" ] && [ -z "${HARNESS_AI_AUDIT_SCRIPT:-}" ]; then
+            echo "HARNESS_AI_AUDIT_CMD is no longer executed directly."
+            echo "Create a checked-in wrapper script and switch to HARNESS_AI_AUDIT_SCRIPT."
+            exit 1
+          fi
+          if [ -z "${HARNESS_AI_AUDIT_SCRIPT:-}" ]; then
+            echo "HARNESS_AI_AUDIT_SCRIPT is not set — the AI security-auditor audit cannot pass in TODO state, so L2 is blocked."
+            exit 1
+          fi
+          case "${HARNESS_AI_AUDIT_SCRIPT}" in
+            *[!A-Za-z0-9._/-]*)
+              echo "HARNESS_AI_AUDIT_SCRIPT value is not a safe file path format: ${HARNESS_AI_AUDIT_SCRIPT}"
+              exit 1
+              ;;
+          esac
+          if [ ! -f "${HARNESS_AI_AUDIT_SCRIPT}" ]; then
+            echo "AI audit script not found: ${HARNESS_AI_AUDIT_SCRIPT}"
+            exit 1
+          fi
+          if [ ! -x "${HARNESS_AI_AUDIT_SCRIPT}" ]; then
+            echo "AI audit script is not executable: ${HARNESS_AI_AUDIT_SCRIPT}"
+            exit 1
+          fi
+          mkdir -p security
+          echo "Running ${HARNESS_AI_AUDIT_SCRIPT}..."
+          "${HARNESS_AI_AUDIT_SCRIPT}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-report
+          path: security/
+
+  # ─────────────────────────────────────────────────────────────
+  # 5. Final verdict — if this job fails, PR merge is blocked
+  # ─────────────────────────────────────────────────────────────
+  l2-verdict:
+    runs-on: ubuntu-latest
+    needs: [secret-scan, dependency-scan, supply-chain, sast, security-auditor-agent]
+    if: always()
+    steps:
+      - name: Verdict
+        run: |
+          if [ "${{ needs.secret-scan.result }}" != "success" ] || \
+             [ "${{ needs.dependency-scan.result }}" != "success" ] || \
+             [ "${{ needs.supply-chain.result }}" != "success" ] || \
+             [ "${{ needs.sast.result }}" != "success" ] || \
+             [ "${{ needs.security-auditor-agent.result }}" != "success" ]; then
+            echo "L2 security hook failed — blocking PR merge"
+            echo "See this standard §5.4"
+            exit 1
+          fi
+          echo "L2 security hook PASS"
