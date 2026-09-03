@@ -1,69 +1,63 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import { LoginForm } from "@/components/login/LoginForm";
+import { WaveBackground } from "@/components/login/WaveBackground";
+
+export const metadata: Metadata = {
+  title: "Log in · coocon",
+};
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 bg-[#f9f9f7] px-4 py-10">
+      <div className="grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-2xl border border-black/[.06] bg-white shadow-sm md:grid-cols-2">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#12172b] via-[#153467] to-[#1c5cab] px-12 py-16 md:flex md:flex-col md:justify-center">
+          <WaveBackground />
+          <div className="relative z-10 max-w-sm">
+            <p className="text-sm font-medium text-[#9ec5f4]">안전한 금융거래의 시작</p>
+            <h1 className="mt-3 text-3xl font-bold leading-tight text-white">
+              비대면 고객확인
+              <br />
+              eKYC 통합 서비스
+            </h1>
+            <p className="mt-5 text-sm leading-relaxed text-[#c3c2b7]">
+              한 번의 연동으로 금융 가이드라인 인증 방식이 포함된
+              <br />
+              eKYC 프로세스를 구현하실 수 있습니다
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center px-8 py-12 sm:px-14">
+          <LoginForm />
+        </div>
+      </div>
+
+      <footer className="w-full max-w-5xl px-2 text-xs leading-relaxed text-[#898781]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p>
+            <span className="font-medium text-[#52514e]">T.</span> 1588-3987
+            <span className="mx-2 text-[#e1e0d9]">|</span>
+            <span className="font-medium text-[#52514e]">T.</span> 02-3779-9199
+            <span className="mx-2 text-[#e1e0d9]">|</span>
+            <span className="font-medium text-[#52514e]">E.</span> biz@coocon.net
+          </p>
+          <p className="flex gap-3">
+            <a href="#" className="hover:text-[#2a78d6] hover:underline">
+              서비스 이용약관
+            </a>
+            <span className="text-[#e1e0d9]">|</span>
+            <a href="#" className="hover:text-[#2a78d6] hover:underline">
+              개인정보처리방침
+            </a>
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <p className="mt-1.5">
+          (주)쿠콘 | 대표자 : 김종현 | 사업자등록번호 : 102-86-85702 | 서울특별시 영등포구 영신로 220 KnK디지털타워 19층
+        </p>
+        <p className="mt-1">
+          본 사이트의 모든 콘텐츠는 저작권법의 보호를 받는 바, 무단 전재, 복사, 배포 등을 금합니다. ©COOCON Corp. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 }
