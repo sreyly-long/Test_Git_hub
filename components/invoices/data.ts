@@ -1,6 +1,6 @@
 export type InvoiceStatTheme = "blue" | "green" | "orange" | "red" | "violet";
 
-export type InvoiceStat =
+export type InvoiceStat = { viewHref: string; exportHref: string } & (
   | {
       kind: "delta";
       label: string;
@@ -18,6 +18,7 @@ export type InvoiceStat =
       subtitle: string;
       icon: "invoice" | "alert";
       iconTheme: InvoiceStatTheme;
-    };
+    }
+);
 
 export type PaymentMethod = "visa" | "mastercard" | "bank" | "paypal" | "cash";

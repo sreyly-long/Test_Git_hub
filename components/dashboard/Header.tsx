@@ -1,5 +1,8 @@
-import { IconSearch, IconBell, IconChat, IconChevronDown, IconChevronRight, IconCalendarCheck, IconLogout } from "./icons";
+import type { ReactNode } from "react";
+import { IconSearch, IconChevronDown, IconChevronRight, IconLogout } from "./icons";
 import { Avatar } from "./Avatar";
+import { NotificationsBell } from "./NotificationsBell";
+import { MessagesDropdown } from "./MessagesDropdown";
 import { logoutAction } from "@/lib/actions/auth";
 
 type Breadcrumb = {
@@ -12,10 +15,10 @@ type HeaderProps = {
   searchPlaceholder?: string;
   searchAction?: string;
   q?: string;
-  notificationCount?: number;
   breadcrumbs?: Breadcrumb[];
   subtitle?: string;
-  dateRangeLabel?: string;
+  /** Replaces the search box with a custom control, e.g. a date-range picker. */
+  rightControl?: ReactNode;
   userName: string;
   userRole: string;
 };
@@ -25,10 +28,9 @@ export function Header({
   searchPlaceholder = "Search booking, room, etc",
   searchAction,
   q,
-  notificationCount,
   breadcrumbs,
   subtitle,
-  dateRangeLabel,
+  rightControl,
   userName,
   userRole,
 }: HeaderProps) {
@@ -60,15 +62,8 @@ export function Header({
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-4">
-        {dateRangeLabel ? (
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-3.5 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
-          >
-            <IconCalendarCheck className="h-4 w-4 text-[#898781]" />
-            {dateRangeLabel}
-            <IconChevronDown className="h-3.5 w-3.5 text-[#898781]" />
-          </button>
+        {rightControl ? (
+          rightControl
         ) : searchAction ? (
           <form action={searchAction} method="get" className="relative hidden max-w-sm flex-1 sm:block">
             <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#898781]" />
@@ -91,28 +86,8 @@ export function Header({
           </label>
         )}
 
-        <button
-          type="button"
-          aria-label="Messages"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-[#52514e] hover:bg-black/5"
-        >
-          <IconChat className="h-5 w-5" />
-        </button>
-
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#52514e] hover:bg-black/5"
-        >
-          <IconBell className="h-5 w-5" />
-          {notificationCount ? (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#e34948] px-1 text-[10px] font-semibold text-white ring-2 ring-[#f9f9f7]">
-              {notificationCount}
-            </span>
-          ) : (
-            <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-[#e34948] ring-2 ring-[#f9f9f7]" />
-          )}
-        </button>
+        <MessagesDropdown />
+        <NotificationsBell />
 
         <div className="flex items-center gap-2 border-l border-[#e1e0d9] pl-4">
           <Avatar name={userName} className="h-9 w-9" />

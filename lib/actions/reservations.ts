@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
+import { notifyUser } from "./notifications";
 import type { ActionState } from "./rooms";
 
 async function nextBookingCode() {
@@ -11,7 +12,7 @@ async function nextBookingCode() {
 }
 
 export async function createReservationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireSession();
+  const session = await requireSession();
 
   const guestName = String(formData.get("guestName") ?? "").trim();
   const guestEmail = String(formData.get("guestEmail") ?? "").trim();
@@ -40,9 +41,10 @@ export async function createReservationAction(_prevState: ActionState, formData:
   const nights = Math.max(1, Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
   const totalAmount = room.pricePerNight * nights;
 
+  const bookingCode = await nextBookingCode();
   await prisma.reservation.create({
     data: {
-      bookingCode: await nextBookingCode(),
+      bookingCode,
       guestName,
       guestEmail,
       roomId,
@@ -54,6 +56,13 @@ export async function createReservationAction(_prevState: ActionState, formData:
       source,
     },
   });
+
+  await notifyUser(
+    session.user.id,
+    "booking",
+    "Booking Confirmation",
+    `Booking ${bookingCode} for ${guestName}, ${room.roomType} Room ${room.number}.`,
+  );
 
   revalidatePath("/reservation");
   revalidatePath("/dashboard");

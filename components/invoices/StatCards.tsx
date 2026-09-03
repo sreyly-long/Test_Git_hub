@@ -1,5 +1,6 @@
 import { Card } from "@/components/dashboard/Card";
-import { IconArrowUp, IconArrowDown, IconMoreVertical, IconInvoice, IconAlertCircle, IconDollarCircle } from "@/components/dashboard/icons";
+import { StatCardMenu } from "@/components/dashboard/StatCardMenu";
+import { IconArrowUp, IconArrowDown, IconInvoice, IconAlertCircle, IconDollarCircle } from "@/components/dashboard/icons";
 import type { InvoiceStat, InvoiceStatTheme } from "./data";
 
 const iconByKey = {
@@ -24,14 +25,6 @@ const subtitleTheme: Record<InvoiceStatTheme, string> = {
   violet: "text-[#4a3aa7]",
 };
 
-function MoreButton() {
-  return (
-    <button type="button" aria-label="More options" className="text-[#898781] hover:text-[#52514e]">
-      <IconMoreVertical className="h-4 w-4" />
-    </button>
-  );
-}
-
 export function StatCards({ stats }: { stats: InvoiceStat[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -48,7 +41,7 @@ export function StatCards({ stats }: { stats: InvoiceStat[] }) {
                   </span>
                   <span className="text-sm text-[#52514e]">{stat.label}</span>
                 </div>
-                <MoreButton />
+                <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
               </div>
               <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
               <div className="mt-3 flex items-center gap-2">
@@ -82,7 +75,7 @@ export function StatCards({ stats }: { stats: InvoiceStat[] }) {
                   <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
                 </div>
               </div>
-              <MoreButton />
+              <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
             </div>
             <p className={`mt-3 text-xs font-medium ${subtitleTheme[stat.iconTheme]}`}>{stat.subtitle}</p>
           </Card>

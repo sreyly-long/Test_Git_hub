@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { percentChange, startOfDay, addDays, startOfMonth, addMonths } from "@/lib/stats";
 import { colorForPlatform, MONTH_LABELS, WEEKDAY_LABELS } from "@/lib/platform-colors";
+import { timeAgo } from "@/lib/time-ago";
 
 export const metadata: Metadata = {
   title: "Dashboard · coocon",
@@ -48,10 +49,10 @@ export default async function DashboardPage() {
     prisma.reservation.aggregate({ _sum: { totalAmount: true }, where: { checkIn: { gte: twoWeeksAgo, lt: weekAgo } } }),
     prisma.reservation.count({ where: { checkIn: { gte: weekAgo, lt: today } } }),
     prisma.reservation.count({ where: { checkIn: { gte: twoWeeksAgo, lt: weekAgo } } }),
-    prisma.reservation.count({ where: { checkIn: { gte: today, lt: tomorrow } } }),
-    prisma.reservation.count({ where: { checkIn: { gte: lastWeekToday, lt: lastWeekTomorrow } } }),
-    prisma.reservation.count({ where: { checkOut: { gte: today, lt: tomorrow } } }),
-    prisma.reservation.count({ where: { checkOut: { gte: lastWeekToday, lt: lastWeekTomorrow } } }),
+    prisma.reservation.count({ where: { status: "Checked In", checkIn: { gte: today, lt: tomorrow } } }),
+    prisma.reservation.count({ where: { status: "Checked In", checkIn: { gte: lastWeekToday, lt: lastWeekTomorrow } } }),
+    prisma.reservation.count({ where: { status: "Checked Out", checkOut: { gte: today, lt: tomorrow } } }),
+    prisma.reservation.count({ where: { status: "Checked Out", checkOut: { gte: lastWeekToday, lt: lastWeekTomorrow } } }),
   ]);
 
   const revenueDelta = percentChange(revenueThisWeek._sum.totalAmount ?? 0, revenueLastWeek._sum.totalAmount ?? 0);
@@ -165,15 +166,6 @@ export default async function DashboardPage() {
     prisma.invoice.findMany({ where: { status: "Paid" }, orderBy: { issueDate: "desc" }, take: 3 }),
     prisma.review.findMany({ orderBy: { date: "desc" }, take: 3 }),
   ]);
-
-  function timeAgo(date: Date): string {
-    const diffMs = now.getTime() - date.getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    if (hours < 1) return "just now";
-    if (hours < 24) return `${hours} hr${hours === 1 ? "" : "s"} ago`;
-    const days = Math.floor(hours / 24);
-    return `${days} day${days === 1 ? "" : "s"} ago`;
-  }
 
   const activityEvents: (Activity & { at: Date })[] = [
     ...latestReservations.map((r) => ({

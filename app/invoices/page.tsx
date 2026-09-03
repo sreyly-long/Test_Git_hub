@@ -8,7 +8,8 @@ import type { InvoiceStat } from "@/components/invoices/data";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parsePage, paginationMeta } from "@/lib/pagination";
-import { percentChange, startOfMonth, addMonths } from "@/lib/stats";
+import { percentChange, startOfMonth, addMonths, startOfDay } from "@/lib/stats";
+import { buildInvoiceWhere, invoiceFilterQueryString } from "@/lib/invoice-filters";
 
 export const metadata: Metadata = {
   title: "Invoices · coocon",
@@ -17,14 +18,25 @@ export const metadata: Metadata = {
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    status?: string;
+    paymentMethod?: string;
+    roomType?: string;
+    issueDateFrom?: string;
+    issueDateTo?: string;
+  }>;
 }) {
   const session = await requireSession();
   const sp = await searchParams;
+  const q = sp.q?.trim();
+  const { status, paymentMethod, roomType, issueDateFrom, issueDateTo } = sp;
 
   const now = new Date();
   const monthStart = startOfMonth(now);
   const prevMonthStart = addMonths(monthStart, -1);
+  const today = startOfDay(now);
 
   const [
     total,
@@ -56,16 +68,30 @@ export default async function InvoicesPage({
   const revenueDelta = percentChange(revenueThisMonth._sum.amount ?? 0, revenueLastMonth._sum.amount ?? 0);
   const pct = (n: number) => (total === 0 ? "0.0% of total" : `${((n / total) * 100).toFixed(1)}% of total`);
 
+  function hrefsFor(query: string) {
+    return {
+      viewHref: query ? `/invoices?${query}` : "/invoices",
+      exportHref: query ? `/invoices/export?${query}` : "/invoices/export",
+    };
+  }
+
+  const monthStartStr = monthStart.toISOString().slice(0, 10);
+  const todayStr = today.toISOString().slice(0, 10);
+
   const stats: InvoiceStat[] = [
-    { kind: "delta", label: "Total Invoices", value: String(total), deltaPct: totalDelta.pct, direction: totalDelta.direction, fromLabel: "from last month", icon: "invoice", iconTheme: "blue" },
-    { kind: "ratio", label: "Paid Invoices", value: String(paid), subtitle: pct(paid), icon: "invoice", iconTheme: "green" },
-    { kind: "ratio", label: "Pending Invoices", value: String(pending), subtitle: pct(pending), icon: "invoice", iconTheme: "orange" },
-    { kind: "ratio", label: "Overdue Invoices", value: String(overdue), subtitle: pct(overdue), icon: "alert", iconTheme: "red" },
-    { kind: "delta", label: "Total Revenue", value: `$${(revenueThisMonth._sum.amount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, deltaPct: revenueDelta.pct, direction: revenueDelta.direction, fromLabel: "from last month", icon: "dollar", iconTheme: "violet" },
+    { kind: "delta", label: "Total Invoices", value: String(total), deltaPct: totalDelta.pct, direction: totalDelta.direction, fromLabel: "from last month", icon: "invoice", iconTheme: "blue", ...hrefsFor("") },
+    { kind: "ratio", label: "Paid Invoices", value: String(paid), subtitle: pct(paid), icon: "invoice", iconTheme: "green", ...hrefsFor("status=Paid") },
+    { kind: "ratio", label: "Pending Invoices", value: String(pending), subtitle: pct(pending), icon: "invoice", iconTheme: "orange", ...hrefsFor("status=Pending") },
+    { kind: "ratio", label: "Overdue Invoices", value: String(overdue), subtitle: pct(overdue), icon: "alert", iconTheme: "red", ...hrefsFor("status=Overdue") },
+    { kind: "delta", label: "Total Revenue", value: `$${(revenueThisMonth._sum.amount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, deltaPct: revenueDelta.pct, direction: revenueDelta.direction, fromLabel: "from last month", icon: "dollar", iconTheme: "violet", ...hrefsFor(`status=Paid&issueDateFrom=${monthStartStr}&issueDateTo=${todayStr}`) },
   ];
 
-  const meta = paginationMeta(parsePage(sp), total);
+  const where = buildInvoiceWhere({ q, status, paymentMethod, roomType, issueDateFrom, issueDateTo });
+  const filteredTotal = await prisma.invoice.count({ where });
+  const meta = paginationMeta(parsePage(sp), filteredTotal);
+
   const invoices = await prisma.invoice.findMany({
+    where,
     include: { room: true, reservation: { select: { bookingCode: true } } },
     orderBy: { issueDate: "desc" },
     skip: meta.skip,
@@ -79,6 +105,10 @@ export default async function InvoicesPage({
     roomNumber: r.room.number,
   }));
 
+  const filterQuery = invoiceFilterQueryString({ q, status, paymentMethod, roomType, issueDateFrom, issueDateTo });
+  const basePath = filterQuery ? `/invoices?${filterQuery}` : "/invoices";
+  const exportHref = filterQuery ? `/invoices/export?${filterQuery}` : "/invoices/export";
+
   return (
     <div className="flex min-h-screen w-full bg-[#f9f9f7]">
       <Sidebar active="Invoices" />
@@ -88,14 +118,15 @@ export default async function InvoicesPage({
           <Header
             title="Invoices"
             searchPlaceholder="Search invoice, guest, booking ID..."
-            notificationCount={3}
+            searchAction="/invoices"
+            q={q}
             userName={session.user.name}
             userRole={session.user.role}
           />
 
           <StatCards stats={stats} />
-          <Toolbar reservations={reservationOptions} />
-          <InvoicesTable invoices={invoices} meta={meta} />
+          <Toolbar reservations={reservationOptions} exportHref={exportHref} />
+          <InvoicesTable invoices={invoices} meta={meta} basePath={basePath} />
         </div>
       </main>
     </div>

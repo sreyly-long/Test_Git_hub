@@ -1,6 +1,6 @@
 export type ReviewStatTheme = "amber" | "blue" | "green" | "red";
 
-export type ReviewStat =
+export type ReviewStat = { viewHref: string; exportHref: string } & (
   | {
       kind: "rating";
       label: string;
@@ -24,4 +24,5 @@ export type ReviewStat =
       value: string;
       subtitle: string;
       iconTheme: ReviewStatTheme;
-    };
+    }
+);

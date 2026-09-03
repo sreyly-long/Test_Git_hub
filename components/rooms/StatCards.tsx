@@ -1,12 +1,6 @@
 import { Card } from "@/components/dashboard/Card";
-import {
-  IconMoreVertical,
-  IconBuilding,
-  IconUsersDuo,
-  IconBed,
-  IconCalendarCheck,
-  IconWrench,
-} from "@/components/dashboard/icons";
+import { StatCardMenu } from "@/components/dashboard/StatCardMenu";
+import { IconBuilding, IconUsersDuo, IconBed, IconCalendarCheck, IconWrench } from "@/components/dashboard/icons";
 import type { RoomStatTheme } from "./data";
 
 type RoomCounts = {
@@ -37,6 +31,13 @@ function pctOfTotal(value: number, total: number) {
   return `${((value / total) * 100).toFixed(1)}% of total`;
 }
 
+function hrefsFor(query: string) {
+  return {
+    viewHref: query ? `/rooms?${query}` : "/rooms",
+    exportHref: query ? `/rooms/export?${query}` : "/rooms/export",
+  };
+}
+
 export function StatCards({ total, occupied, available, reserved, maintenance }: RoomCounts) {
   const stats: {
     label: string;
@@ -45,12 +46,14 @@ export function StatCards({ total, occupied, available, reserved, maintenance }:
     subtitleTheme: RoomStatTheme | "muted";
     Icon: typeof IconBuilding;
     iconTheme: RoomStatTheme;
+    viewHref: string;
+    exportHref: string;
   }[] = [
-    { label: "Total Rooms", value: total, subtitle: "All rooms", subtitleTheme: "muted", Icon: IconBuilding, iconTheme: "blue" },
-    { label: "Occupied", value: occupied, subtitle: pctOfTotal(occupied, total), subtitleTheme: "green", Icon: IconUsersDuo, iconTheme: "green" },
-    { label: "Available", value: available, subtitle: pctOfTotal(available, total), subtitleTheme: "blue", Icon: IconBed, iconTheme: "blue" },
-    { label: "Reserved", value: reserved, subtitle: pctOfTotal(reserved, total), subtitleTheme: "orange", Icon: IconCalendarCheck, iconTheme: "orange" },
-    { label: "Maintenance", value: maintenance, subtitle: pctOfTotal(maintenance, total), subtitleTheme: "red", Icon: IconWrench, iconTheme: "red" },
+    { label: "Total Rooms", value: total, subtitle: "All rooms", subtitleTheme: "muted", Icon: IconBuilding, iconTheme: "blue", ...hrefsFor("") },
+    { label: "Occupied", value: occupied, subtitle: pctOfTotal(occupied, total), subtitleTheme: "green", Icon: IconUsersDuo, iconTheme: "green", ...hrefsFor("status=Occupied") },
+    { label: "Available", value: available, subtitle: pctOfTotal(available, total), subtitleTheme: "blue", Icon: IconBed, iconTheme: "blue", ...hrefsFor("status=Available") },
+    { label: "Reserved", value: reserved, subtitle: pctOfTotal(reserved, total), subtitleTheme: "orange", Icon: IconCalendarCheck, iconTheme: "orange", ...hrefsFor("status=Reserved") },
+    { label: "Maintenance", value: maintenance, subtitle: pctOfTotal(maintenance, total), subtitleTheme: "red", Icon: IconWrench, iconTheme: "red", ...hrefsFor("status=Maintenance") },
   ];
 
   return (
@@ -67,9 +70,7 @@ export function StatCards({ total, occupied, available, reserved, maintenance }:
                 <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
               </div>
             </div>
-            <button type="button" aria-label="More options" className="text-[#898781] hover:text-[#52514e]">
-              <IconMoreVertical className="h-4 w-4" />
-            </button>
+            <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
           </div>
 
           <p className={`mt-3 text-xs font-medium ${subtitleTheme[stat.subtitleTheme]}`}>{stat.subtitle}</p>

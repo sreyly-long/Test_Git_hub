@@ -1,11 +1,6 @@
 import { Card } from "@/components/dashboard/Card";
-import {
-  IconMoreVertical,
-  IconBuilding,
-  IconCheckCircle,
-  IconLogout,
-  IconUserX,
-} from "@/components/dashboard/icons";
+import { StatCardMenu } from "@/components/dashboard/StatCardMenu";
+import { IconBuilding, IconCheckCircle, IconLogout, IconUserX } from "@/components/dashboard/icons";
 import type { StaffStatTheme } from "./data";
 
 const iconTheme: Record<StaffStatTheme, string> = {
@@ -27,14 +22,21 @@ function pct(value: number, total: number) {
   return total === 0 ? "0.0% of total" : `${((value / total) * 100).toFixed(1)}% of total`;
 }
 
+function hrefsFor(query: string) {
+  return {
+    viewHref: query ? `/staffs?${query}` : "/staffs",
+    exportHref: query ? `/staffs/export?${query}` : "/staffs/export",
+  };
+}
+
 type Counts = { total: number; active: number; onLeave: number; inactive: number };
 
 export function StatCards({ total, active, onLeave, inactive }: Counts) {
   const stats = [
-    { label: "Total Staffs", value: total, subtitle: "All employees", subtitleTheme: "muted" as const, Icon: IconBuilding, iconTheme: "blue" as const },
-    { label: "Active", value: active, subtitle: pct(active, total), subtitleTheme: "green" as const, Icon: IconCheckCircle, iconTheme: "green" as const },
-    { label: "On Leave", value: onLeave, subtitle: pct(onLeave, total), subtitleTheme: "orange" as const, Icon: IconLogout, iconTheme: "orange" as const },
-    { label: "Inactive", value: inactive, subtitle: pct(inactive, total), subtitleTheme: "red" as const, Icon: IconUserX, iconTheme: "red" as const },
+    { label: "Total Staffs", value: total, subtitle: "All employees", subtitleTheme: "muted" as const, Icon: IconBuilding, iconTheme: "blue" as const, ...hrefsFor("") },
+    { label: "Active", value: active, subtitle: pct(active, total), subtitleTheme: "green" as const, Icon: IconCheckCircle, iconTheme: "green" as const, ...hrefsFor("status=Active") },
+    { label: "On Leave", value: onLeave, subtitle: pct(onLeave, total), subtitleTheme: "orange" as const, Icon: IconLogout, iconTheme: "orange" as const, ...hrefsFor(`status=${encodeURIComponent("On Leave")}`) },
+    { label: "Inactive", value: inactive, subtitle: pct(inactive, total), subtitleTheme: "red" as const, Icon: IconUserX, iconTheme: "red" as const, ...hrefsFor("status=Inactive") },
   ];
 
   return (
@@ -51,9 +53,7 @@ export function StatCards({ total, active, onLeave, inactive }: Counts) {
                 <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
               </div>
             </div>
-            <button type="button" aria-label="More options" className="text-[#898781] hover:text-[#52514e]">
-              <IconMoreVertical className="h-4 w-4" />
-            </button>
+            <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
           </div>
 
           <p className={`mt-3 text-xs font-medium ${subtitleTheme[stat.subtitleTheme]}`}>{stat.subtitle}</p>

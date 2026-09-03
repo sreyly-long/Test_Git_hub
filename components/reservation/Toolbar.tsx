@@ -10,7 +10,7 @@ const statusOptions = RESERVATION_STATUSES.map((s) => ({ value: s, label: s }));
 const roomTypeOptions = ROOM_TYPES.map((t) => ({ value: t, label: t }));
 const platformOptions = BOOKING_SOURCES.map((s) => ({ value: s, label: s }));
 
-export function Toolbar({ rooms }: { rooms: RoomOption[] }) {
+export function Toolbar({ rooms, exportHref }: { rooms: RoomOption[]; exportHref: string }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button
@@ -30,19 +30,20 @@ export function Toolbar({ rooms }: { rooms: RoomOption[] }) {
         fromParam="checkInFrom"
         toParam="checkInTo"
         label="Filters"
+        title="Check-in date range"
         fromLabel="Check-in from"
         toLabel="Check-in to"
       />
 
       <div className="ml-auto flex items-center gap-3">
         <AddReservationModal rooms={rooms} />
-        <button
-          type="button"
+        <a
+          href={exportHref}
           className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-4 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
         >
           <IconDownload className="h-4 w-4" />
           Export
-        </button>
+        </a>
       </div>
     </div>
   );

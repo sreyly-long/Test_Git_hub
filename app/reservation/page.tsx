@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import type { Prisma } from "@prisma/client";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { StatCards, type ReservationStat } from "@/components/reservation/StatCards";
@@ -9,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parsePage, paginationMeta } from "@/lib/pagination";
 import { percentChange, startOfDay, addDays, startOfMonth, addMonths } from "@/lib/stats";
+import { buildReservationWhere, reservationFilterQueryString } from "@/lib/reservation-filters";
 
 export const metadata: Metadata = {
   title: "Reservation · coocon",
@@ -61,8 +61,8 @@ export default async function ReservationPage({
     prisma.reservation.count(),
     prisma.reservation.count({ where: { status: "Confirmed" } }),
     prisma.reservation.count({ where: { status: "Cancelled" } }),
-    prisma.reservation.count({ where: { checkIn: { gte: today, lt: tomorrow } } }),
-    prisma.reservation.count({ where: { checkIn: { gte: lastWeekSameDay, lt: lastWeekSameDayEnd } } }),
+    prisma.reservation.count({ where: { status: "Checked In", checkIn: { gte: today, lt: tomorrow } } }),
+    prisma.reservation.count({ where: { status: "Checked In", checkIn: { gte: lastWeekSameDay, lt: lastWeekSameDayEnd } } }),
     prisma.reservation.count({ where: { checkIn: { gte: weekAgo, lt: today } } }),
     prisma.reservation.count({ where: { checkIn: { gte: twoWeeksAgo, lt: weekAgo } } }),
     prisma.reservation.count({ where: { status: "Confirmed", checkIn: { gte: weekAgo, lt: today } } }),
@@ -74,24 +74,7 @@ export default async function ReservationPage({
     prisma.room.findMany({ orderBy: { number: "asc" }, select: { id: true, number: true, name: true, pricePerNight: true } }),
   ]);
 
-  const andConditions: Prisma.ReservationWhereInput[] = [];
-  if (q) {
-    andConditions.push({
-      OR: [
-        { guestName: { contains: q } },
-        { guestEmail: { contains: q } },
-        { bookingCode: { contains: q } },
-        { room: { number: { contains: q } } },
-      ],
-    });
-  }
-  if (status) andConditions.push({ status });
-  if (roomType) andConditions.push({ room: { roomType } });
-  if (source) andConditions.push({ source });
-  if (checkInFrom) andConditions.push({ checkIn: { gte: new Date(checkInFrom) } });
-  if (checkInTo) andConditions.push({ checkIn: { lt: addDays(new Date(checkInTo), 1) } });
-
-  const where: Prisma.ReservationWhereInput = andConditions.length ? { AND: andConditions } : {};
+  const where = buildReservationWhere({ q, status, roomType, source, checkInFrom, checkInTo });
   const filteredTotal = await prisma.reservation.count({ where });
 
   const totalDelta = percentChange(thisWeekTotal, lastWeekTotal);
@@ -100,12 +83,26 @@ export default async function ReservationPage({
   const checkInDelta = percentChange(checkInTodayCount, checkInLastWeekCount);
   const revenueDelta = percentChange(revenueThisMonth._sum.totalAmount ?? 0, revenueLastMonth._sum.totalAmount ?? 0);
 
+  function fmtDateInput(date: Date) {
+    return date.toISOString().slice(0, 10);
+  }
+
+  function hrefsFor(query: string) {
+    return {
+      viewHref: query ? `/reservation?${query}` : "/reservation",
+      exportHref: query ? `/reservation/export?${query}` : "/reservation/export",
+    };
+  }
+
+  const todayStr = fmtDateInput(today);
+  const monthStartStr = fmtDateInput(monthStart);
+
   const stats: ReservationStat[] = [
-    { label: "Total Reservations", value: String(totalCount), deltaPct: totalDelta.pct, direction: totalDelta.direction, fromLabel: "from last week", icon: "calendar", iconTheme: "blue", badgeTheme: "blue" },
-    { label: "Confirmed", value: String(confirmedCount), deltaPct: confirmedDelta.pct, direction: confirmedDelta.direction, fromLabel: "from last week", icon: "check", iconTheme: "green", badgeTheme: "green" },
-    { label: "Check-in Today", value: String(checkInTodayCount), deltaPct: checkInDelta.pct, direction: checkInDelta.direction, fromLabel: "from last week", icon: "clock", iconTheme: "orange", badgeTheme: "orange" },
-    { label: "Cancelled", value: String(cancelledCount), deltaPct: cancelledDelta.pct, direction: cancelledDelta.direction, fromLabel: "from last week", icon: "cancel", iconTheme: "red", badgeTheme: "red" },
-    { label: "Revenue (This Month)", value: `$${(revenueThisMonth._sum.totalAmount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, deltaPct: revenueDelta.pct, direction: revenueDelta.direction, fromLabel: "from last month", icon: "dollar", iconTheme: "violet", badgeTheme: "blue" },
+    { label: "Total Reservations", value: String(totalCount), deltaPct: totalDelta.pct, direction: totalDelta.direction, fromLabel: "from last week", icon: "calendar", iconTheme: "blue", badgeTheme: "blue", ...hrefsFor("") },
+    { label: "Confirmed", value: String(confirmedCount), deltaPct: confirmedDelta.pct, direction: confirmedDelta.direction, fromLabel: "from last week", icon: "check", iconTheme: "green", badgeTheme: "green", ...hrefsFor(reservationFilterQueryString({ status: "Confirmed" })) },
+    { label: "Check-in Today", value: String(checkInTodayCount), deltaPct: checkInDelta.pct, direction: checkInDelta.direction, fromLabel: "from last week", icon: "clock", iconTheme: "orange", badgeTheme: "orange", ...hrefsFor(reservationFilterQueryString({ status: "Checked In", checkInFrom: todayStr, checkInTo: todayStr })) },
+    { label: "Cancelled", value: String(cancelledCount), deltaPct: cancelledDelta.pct, direction: cancelledDelta.direction, fromLabel: "from last week", icon: "cancel", iconTheme: "red", badgeTheme: "red", ...hrefsFor(reservationFilterQueryString({ status: "Cancelled" })) },
+    { label: "Revenue (This Month)", value: `$${(revenueThisMonth._sum.totalAmount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, deltaPct: revenueDelta.pct, direction: revenueDelta.direction, fromLabel: "from last month", icon: "dollar", iconTheme: "violet", badgeTheme: "blue", ...hrefsFor(reservationFilterQueryString({ checkInFrom: monthStartStr, checkInTo: todayStr })) },
   ];
 
   const meta = paginationMeta(parsePage(sp), filteredTotal);
@@ -117,15 +114,9 @@ export default async function ReservationPage({
     take: meta.take,
   });
 
-  const filterParams = new URLSearchParams();
-  if (q) filterParams.set("q", q);
-  if (status) filterParams.set("status", status);
-  if (roomType) filterParams.set("roomType", roomType);
-  if (source) filterParams.set("source", source);
-  if (checkInFrom) filterParams.set("checkInFrom", checkInFrom);
-  if (checkInTo) filterParams.set("checkInTo", checkInTo);
-  const filterQuery = filterParams.toString();
+  const filterQuery = reservationFilterQueryString({ q, status, roomType, source, checkInFrom, checkInTo });
   const basePath = filterQuery ? `/reservation?${filterQuery}` : "/reservation";
+  const exportHref = filterQuery ? `/reservation/export?${filterQuery}` : "/reservation/export";
 
   return (
     <div className="flex min-h-screen w-full bg-[#f9f9f7]">
@@ -138,13 +129,12 @@ export default async function ReservationPage({
             searchPlaceholder="Search reservation, guest, room, etc"
             searchAction="/reservation"
             q={q}
-            notificationCount={3}
             userName={session.user.name}
             userRole={session.user.role}
           />
 
           <StatCards stats={stats} />
-          <Toolbar rooms={rooms} />
+          <Toolbar rooms={rooms} exportHref={exportHref} />
           <ReservationTable reservations={reservations} meta={meta} rooms={rooms} basePath={basePath} />
         </div>
       </main>

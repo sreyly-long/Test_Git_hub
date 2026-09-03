@@ -1,8 +1,8 @@
 import { Card } from "@/components/dashboard/Card";
+import { StatCardMenu } from "@/components/dashboard/StatCardMenu";
 import {
   IconArrowUp,
   IconArrowDown,
-  IconMoreVertical,
   IconCalendarCheck,
   IconCheckCircle,
   IconClock,
@@ -28,6 +28,8 @@ export type ReservationStat = {
   icon: keyof typeof iconByKey;
   iconTheme: StatTheme;
   badgeTheme: StatTheme;
+  viewHref: string;
+  exportHref: string;
 };
 
 const iconTheme: Record<StatTheme, string> = {
@@ -62,13 +64,7 @@ export function StatCards({ stats }: { stats: ReservationStat[] }) {
                 </span>
                 <span className="text-sm text-[#52514e]">{stat.label}</span>
               </div>
-              <button
-                type="button"
-                aria-label="More options"
-                className="text-[#898781] hover:text-[#52514e]"
-              >
-                <IconMoreVertical className="h-4 w-4" />
-              </button>
+              <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
             </div>
 
             <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>

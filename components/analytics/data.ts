@@ -6,4 +6,6 @@ export type AnalyticsStat = {
   fromLabel: string;
   icon: "dollar" | "calendar" | "trending" | "pie";
   iconTheme: "blue" | "violet";
+  viewHref: string;
+  exportHref: string;
 };

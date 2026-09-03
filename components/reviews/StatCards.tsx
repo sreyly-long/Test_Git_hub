@@ -1,5 +1,6 @@
 import { Card } from "@/components/dashboard/Card";
-import { IconArrowUp, IconArrowDown, IconMoreVertical, IconStarFilled, IconChat } from "@/components/dashboard/icons";
+import { StatCardMenu } from "@/components/dashboard/StatCardMenu";
+import { IconArrowUp, IconArrowDown, IconStarFilled, IconChat } from "@/components/dashboard/icons";
 import { Stars } from "./Stars";
 import type { ReviewStat, ReviewStatTheme } from "./data";
 
@@ -31,14 +32,6 @@ const subtitleTheme: Record<ReviewStatTheme, string> = {
   red: "text-[#d03b3b]",
 };
 
-function MoreButton() {
-  return (
-    <button type="button" aria-label="More options" className="text-[#898781] hover:text-[#52514e]">
-      <IconMoreVertical className="h-4 w-4" />
-    </button>
-  );
-}
-
 export function StatCards({ stats }: { stats: ReviewStat[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -53,7 +46,7 @@ export function StatCards({ stats }: { stats: ReviewStat[] }) {
                   </span>
                   <span className="text-sm text-[#52514e]">{stat.label}</span>
                 </div>
-                <MoreButton />
+                <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
               </div>
               <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
               <div className="mt-2">
@@ -77,7 +70,7 @@ export function StatCards({ stats }: { stats: ReviewStat[] }) {
                   </span>
                   <span className="text-sm text-[#52514e]">{stat.label}</span>
                 </div>
-                <MoreButton />
+                <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
               </div>
               <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
               <div className="mt-3 flex items-center gap-2">
@@ -100,7 +93,7 @@ export function StatCards({ stats }: { stats: ReviewStat[] }) {
                   <p className="text-2xl font-bold text-[#0b0b0b]">{stat.value}</p>
                 </div>
               </div>
-              <MoreButton />
+              <StatCardMenu viewHref={stat.viewHref} exportHref={stat.exportHref} />
             </div>
             <p className={`mt-3 text-xs font-medium ${subtitleTheme[stat.iconTheme]}`}>{stat.subtitle}</p>
           </Card>

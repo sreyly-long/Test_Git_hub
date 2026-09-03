@@ -1,24 +1,20 @@
-import { IconChevronDown, IconFilter, IconDownload, IconSearch } from "@/components/dashboard/icons";
+import { IconDownload, IconSearch } from "@/components/dashboard/icons";
+import { FilterDropdown } from "@/components/dashboard/FilterDropdown";
+import { NumberRangeFilterDropdown } from "@/components/dashboard/NumberRangeFilterDropdown";
 import { AddRoomModal } from "./AddRoomModal";
+import { ROOM_TYPES, ROOM_STATUSES } from "@/lib/constants";
 
-function DropdownButton({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-3.5 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
-    >
-      {label}
-      <IconChevronDown className="h-3.5 w-3.5 text-[#898781]" />
-    </button>
-  );
-}
+const roomTypeOptions = ROOM_TYPES.map((t) => ({ value: t, label: t }));
+const statusOptions = ROOM_STATUSES.map((s) => ({ value: s, label: s }));
 
-export function Toolbar({ q }: { q?: string }) {
+export function Toolbar({ q, floors, exportHref }: { q?: string; floors: number[]; exportHref: string }) {
+  const floorOptions = floors.map((f) => ({ value: String(f), label: `Floor ${f}` }));
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <DropdownButton label="All Room Types" />
-      <DropdownButton label="All Status" />
-      <DropdownButton label="All Floors" />
+      <FilterDropdown paramName="roomType" allLabel="All Room Types" options={roomTypeOptions} />
+      <FilterDropdown paramName="status" allLabel="All Status" options={statusOptions} />
+      <FilterDropdown paramName="floor" allLabel="All Floors" options={floorOptions} />
 
       <form action="/rooms" method="get">
         <label className="relative">
@@ -33,23 +29,25 @@ export function Toolbar({ q }: { q?: string }) {
         </label>
       </form>
 
-      <button
-        type="button"
-        className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-3.5 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
-      >
-        <IconFilter className="h-4 w-4 text-[#898781]" />
-        Filters
-      </button>
+      <NumberRangeFilterDropdown
+        minParam="priceMin"
+        maxParam="priceMax"
+        label="Filters"
+        title="Price per night"
+        minLabel="Min ($)"
+        maxLabel="Max ($)"
+        prefix="$"
+      />
 
       <div className="ml-auto flex items-center gap-3">
         <AddRoomModal />
-        <button
-          type="button"
+        <a
+          href={exportHref}
           className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-4 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
         >
           <IconDownload className="h-4 w-4" />
           Export
-        </button>
+        </a>
       </div>
     </div>
   );

@@ -8,12 +8,14 @@ export function DateRangeFilterDropdown({
   fromParam,
   toParam,
   label,
+  title,
   fromLabel,
   toLabel,
 }: {
   fromParam: string;
   toParam: string;
   label: string;
+  title: string;
   fromLabel: string;
   toLabel: string;
 }) {
@@ -91,7 +93,7 @@ export function DateRangeFilterDropdown({
 
       {open && (
         <div className="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-[#e1e0d9] bg-white p-4 shadow-lg">
-          <p className="mb-3 text-xs font-medium text-[#52514e]">Check-in date range</p>
+          <p className="mb-3 text-xs font-medium text-[#52514e]">{title}</p>
           <div className="flex flex-col gap-3">
             <div>
               <label className="mb-1 block text-[11px] text-[#898781]">{fromLabel}</label>

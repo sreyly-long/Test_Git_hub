@@ -7,6 +7,7 @@ import { StaffsTable } from "@/components/staffs/StaffsTable";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parsePage, paginationMeta } from "@/lib/pagination";
+import { buildStaffWhere, staffFilterQueryString } from "@/lib/staff-filters";
 
 export const metadata: Metadata = {
   title: "Staffs · coocon",
@@ -15,31 +16,44 @@ export const metadata: Metadata = {
 export default async function StaffsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    department?: string;
+    role?: string;
+    status?: string;
+    hiredFrom?: string;
+    hiredTo?: string;
+  }>;
 }) {
   const session = await requireSession();
   const sp = await searchParams;
   const q = sp.q?.trim();
+  const { department, role, status, hiredFrom, hiredTo } = sp;
 
-  const where = q
-    ? { OR: [{ name: { contains: q } }, { email: { contains: q } }, { role: { contains: q } }] }
-    : {};
+  const where = buildStaffWhere({ q, department, role, status, hiredFrom, hiredTo });
 
-  const [total, active, onLeave, inactive, filteredTotal] = await Promise.all([
+  const [total, active, onLeave, inactive, roleRows] = await Promise.all([
     prisma.staff.count(),
     prisma.staff.count({ where: { status: "Active" } }),
     prisma.staff.count({ where: { status: "On Leave" } }),
     prisma.staff.count({ where: { status: "Inactive" } }),
-    prisma.staff.count({ where }),
+    prisma.staff.findMany({ distinct: ["role"], select: { role: true }, orderBy: { role: "asc" } }),
   ]);
 
+  const filteredTotal = await prisma.staff.count({ where });
   const meta = paginationMeta(parsePage(sp), filteredTotal);
+
   const staffs = await prisma.staff.findMany({
     where,
     orderBy: { staffCode: "asc" },
     skip: meta.skip,
     take: meta.take,
   });
+
+  const filterQuery = staffFilterQueryString({ q, department, role, status, hiredFrom, hiredTo });
+  const basePath = filterQuery ? `/staffs?${filterQuery}` : "/staffs";
+  const exportHref = filterQuery ? `/staffs/export?${filterQuery}` : "/staffs/export";
 
   return (
     <div className="flex min-h-screen w-full bg-[#f9f9f7]">
@@ -50,14 +64,15 @@ export default async function StaffsPage({
           <Header
             title="Staffs"
             searchPlaceholder="Search staff name, email, role..."
-            notificationCount={4}
+            searchAction="/staffs"
+            q={q}
             userName={session.user.name}
             userRole={session.user.role}
           />
 
           <StatCards total={total} active={active} onLeave={onLeave} inactive={inactive} />
-          <Toolbar q={q} />
-          <StaffsTable staffs={staffs} meta={meta} />
+          <Toolbar q={q} roles={roleRows.map((r) => r.role)} exportHref={exportHref} />
+          <StaffsTable staffs={staffs} meta={meta} basePath={basePath} />
         </div>
       </main>
     </div>

@@ -1,24 +1,20 @@
-import { IconChevronDown, IconFilter, IconSearch } from "@/components/dashboard/icons";
+import { IconDownload, IconSearch } from "@/components/dashboard/icons";
+import { FilterDropdown } from "@/components/dashboard/FilterDropdown";
+import { DateRangeFilterDropdown } from "@/components/dashboard/DateRangeFilterDropdown";
 import { AddStaffModal } from "./AddStaffModal";
+import { STAFF_DEPARTMENTS, STAFF_STATUSES } from "@/lib/constants";
 
-function DropdownButton({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-3.5 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
-    >
-      {label}
-      <IconChevronDown className="h-3.5 w-3.5 text-[#898781]" />
-    </button>
-  );
-}
+const departmentOptions = STAFF_DEPARTMENTS.map((d) => ({ value: d, label: d }));
+const statusOptions = STAFF_STATUSES.map((s) => ({ value: s, label: s }));
 
-export function Toolbar({ q }: { q?: string }) {
+export function Toolbar({ q, roles, exportHref }: { q?: string; roles: string[]; exportHref: string }) {
+  const roleOptions = roles.map((r) => ({ value: r, label: r }));
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <DropdownButton label="All Departments" />
-      <DropdownButton label="All Roles" />
-      <DropdownButton label="All Status" />
+      <FilterDropdown paramName="department" allLabel="All Departments" options={departmentOptions} />
+      <FilterDropdown paramName="role" allLabel="All Roles" options={roleOptions} />
+      <FilterDropdown paramName="status" allLabel="All Status" options={statusOptions} />
 
       <form action="/staffs" method="get">
         <label className="relative">
@@ -33,16 +29,24 @@ export function Toolbar({ q }: { q?: string }) {
         </label>
       </form>
 
-      <button
-        type="button"
-        className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-3.5 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
-      >
-        <IconFilter className="h-4 w-4 text-[#898781]" />
-        Filters
-      </button>
+      <DateRangeFilterDropdown
+        fromParam="hiredFrom"
+        toParam="hiredTo"
+        label="Filters"
+        title="Hired date range"
+        fromLabel="Hired from"
+        toLabel="Hired to"
+      />
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-3">
         <AddStaffModal />
+        <a
+          href={exportHref}
+          className="flex items-center gap-2 rounded-xl border border-[#e1e0d9] bg-white px-4 py-2.5 text-sm text-[#52514e] hover:bg-black/[.02]"
+        >
+          <IconDownload className="h-4 w-4" />
+          Export
+        </a>
       </div>
     </div>
   );

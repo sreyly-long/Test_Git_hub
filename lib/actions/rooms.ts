@@ -48,6 +48,45 @@ export async function createRoomAction(_prevState: ActionState, formData: FormDa
   return { success: true };
 }
 
+export async function updateRoomAction(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
+  await requireSession();
+
+  const number = String(formData.get("number") ?? "").trim();
+  const roomType = String(formData.get("roomType") ?? "").trim();
+  const floor = Number(formData.get("floor") ?? 1);
+  const status = String(formData.get("status") ?? "Available");
+  const pricePerNight = Number(formData.get("pricePerNight") ?? 0);
+  const capacity = Number(formData.get("capacity") ?? 1);
+  const features = ROOM_FEATURES.filter((f) => formData.getAll("features").includes(f)) as RoomFeature[];
+
+  if (!number || !roomType || !floor || !pricePerNight || !capacity) {
+    return { error: "Please fill in all required fields." };
+  }
+
+  const existing = await prisma.room.findUnique({ where: { number } });
+  if (existing && existing.id !== id) {
+    return { error: `Room ${number} already exists.` };
+  }
+
+  await prisma.room.update({
+    where: { id },
+    data: {
+      number,
+      name: `${roomType} Room`,
+      roomType,
+      floor,
+      status,
+      pricePerNight,
+      capacity,
+      features: features.join(","),
+    },
+  });
+
+  revalidatePath("/rooms");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function deleteRoomAction(id: string): Promise<void> {
   await requireSession();
   await prisma.room.delete({ where: { id } }).catch(() => {});
