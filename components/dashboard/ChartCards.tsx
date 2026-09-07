@@ -57,7 +57,7 @@ export function RevenueCard({ data }: { data: TrendPoint[] }) {
       </div>
       <TrendChart
         data={data}
-        color="#2a78d6"
+        color="#eb6834"
         yAxisTicks={ticks}
         formatValue={(v) => formatCurrencyCompact(v)}
         formatTooltipTitle={(label) => label}

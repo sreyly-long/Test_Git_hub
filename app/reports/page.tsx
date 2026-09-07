@@ -55,6 +55,7 @@ export default async function ReportsPage({
             q={q}
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <Tabs activeType={type} q={q} />

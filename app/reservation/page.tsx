@@ -131,6 +131,7 @@ export default async function ReservationPage({
             q={q}
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <StatCards stats={stats} />

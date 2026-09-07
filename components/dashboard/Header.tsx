@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { IconSearch, IconChevronDown, IconChevronRight, IconLogout } from "./icons";
-import { Avatar } from "./Avatar";
+import { IconSearch, IconChevronRight, IconLogout } from "./icons";
+import { ProfileMenu } from "./ProfileMenu";
 import { NotificationsBell } from "./NotificationsBell";
 import { MessagesDropdown } from "./MessagesDropdown";
 import { logoutAction } from "@/lib/actions/auth";
@@ -21,6 +21,7 @@ type HeaderProps = {
   rightControl?: ReactNode;
   userName: string;
   userRole: string;
+  userAvatarUrl?: string | null;
 };
 
 export function Header({
@@ -33,6 +34,7 @@ export function Header({
   rightControl,
   userName,
   userRole,
+  userAvatarUrl = null,
 }: HeaderProps) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -89,13 +91,8 @@ export function Header({
         <MessagesDropdown />
         <NotificationsBell />
 
-        <div className="flex items-center gap-2 border-l border-[#e1e0d9] pl-4">
-          <Avatar name={userName} className="h-9 w-9" />
-          <div className="hidden text-left leading-tight sm:block">
-            <p className="text-sm font-medium text-[#0b0b0b]">{userName}</p>
-            <p className="text-xs text-[#898781]">{userRole}</p>
-          </div>
-          <IconChevronDown className="hidden h-4 w-4 text-[#898781] sm:block" />
+        <div className="flex items-center gap-2">
+          <ProfileMenu name={userName} role={userRole} avatarUrl={userAvatarUrl} />
           <form action={logoutAction}>
             <button
               type="submit"

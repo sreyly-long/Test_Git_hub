@@ -568,6 +568,15 @@ export function IconTrash({ className }: IconProps) {
   );
 }
 
+export function IconCamera({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" className={className} {...base}>
+      <path d="M3 7.3A1.3 1.3 0 0 1 4.3 6h1.9l.9-1.6c.2-.4.6-.6 1-.6h3.8c.4 0 .8.2 1 .6L13.8 6h1.9A1.3 1.3 0 0 1 17 7.3v7.4A1.3 1.3 0 0 1 15.7 16H4.3A1.3 1.3 0 0 1 3 14.7Z" />
+      <circle cx="10" cy="10.8" r="2.9" />
+    </svg>
+  );
+}
+
 export function IconX({ className }: IconProps) {
   return (
     <svg viewBox="0 0 20 20" className={className} {...base}>

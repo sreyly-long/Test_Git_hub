@@ -44,6 +44,7 @@ export default async function SettingsPage({
             q={q}
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_1fr_320px]">

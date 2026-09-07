@@ -72,13 +72,12 @@ async function main() {
   await prisma.user.deleteMany();
 
   const passwordHash = await hashPassword("password123");
-  await prisma.user.create({
-    data: {
-      name: "Zain George",
-      email: "admin@hostay.com",
-      passwordHash,
-      role: "Admin",
-    },
+  await prisma.user.createMany({
+    data: [
+      { name: "Zain George", email: "admin@hostay.com", passwordHash, role: "Admin" },
+      { name: "Amara Chen", email: "manager@hostay.com", passwordHash, role: "Manager" },
+      { name: "Liam Brooks", email: "frontdesk@hostay.com", passwordHash, role: "Front Desk" },
+    ],
   });
 
   await prisma.settings.create({ data: { id: "singleton" } });

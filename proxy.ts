@@ -25,7 +25,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (pathname === "/" && hasSession) {
+  if ((pathname === "/" || pathname === "/register") && hasSession) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -33,5 +33,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/reservation/:path*", "/rooms/:path*", "/staffs/:path*", "/analytics/:path*", "/reports/:path*", "/reviews/:path*", "/invoices/:path*", "/settings/:path*"],
+  matcher: ["/", "/register", "/dashboard/:path*", "/reservation/:path*", "/rooms/:path*", "/staffs/:path*", "/analytics/:path*", "/reports/:path*", "/reviews/:path*", "/invoices/:path*", "/settings/:path*"],
 };

@@ -70,6 +70,7 @@ export default async function RoomsPage({
             breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Rooms" }]}
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <StatCards total={total} occupied={occupied} available={available} reserved={reserved} maintenance={maintenance} />

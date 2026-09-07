@@ -68,6 +68,7 @@ export default async function StaffsPage({
             q={q}
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <StatCards total={total} active={active} onLeave={onLeave} inactive={inactive} />

@@ -61,10 +61,10 @@ export default async function DashboardPage() {
   const checkOutDelta = percentChange(checkOutToday, checkOutLastWeek);
 
   const stats: StatCard[] = [
-    { label: "Total Revenue", value: `$${(revenueThisWeek._sum.totalAmount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, deltaPct: revenueDelta.pct, direction: revenueDelta.direction },
-    { label: "New Bookings", value: String(newBookingsThisWeek), deltaPct: bookingsDelta.pct, direction: bookingsDelta.direction },
-    { label: "Check In", value: String(checkInToday), deltaPct: checkInDelta.pct, direction: checkInDelta.direction },
-    { label: "Check-Out", value: String(checkOutToday), deltaPct: checkOutDelta.pct, direction: checkOutDelta.direction },
+    { label: "Total Revenue", value: `$${(revenueThisWeek._sum.totalAmount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, deltaPct: revenueDelta.pct, direction: revenueDelta.direction, icon: "dollar", iconTheme: "green" },
+    { label: "New Bookings", value: String(newBookingsThisWeek), deltaPct: bookingsDelta.pct, direction: bookingsDelta.direction, icon: "calendar", iconTheme: "blue" },
+    { label: "Check In", value: String(checkInToday), deltaPct: checkInDelta.pct, direction: checkInDelta.direction, icon: "checkIn", iconTheme: "pink" },
+    { label: "Check-Out", value: String(checkOutToday), deltaPct: checkOutDelta.pct, direction: checkOutDelta.direction, icon: "checkOut", iconTheme: "violet" },
   ];
 
   // --- Guests: last 7 days ---
@@ -223,6 +223,7 @@ export default async function DashboardPage() {
             searchPlaceholder="Search booking, room, etc"
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_320px]">

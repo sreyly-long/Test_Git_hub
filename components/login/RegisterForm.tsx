@@ -3,22 +3,39 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Logo } from "./Logo";
-import { IconMail, IconLock, IconShieldCheck } from "./icons";
-import { loginAction, type LoginState } from "@/lib/actions/auth";
+import { IconUser, IconMail, IconLock } from "./icons";
+import { registerAction, type RegisterState } from "@/lib/actions/auth";
 
 const inputClasses =
   "w-full rounded-xl border border-[#e1e0d9] bg-[#f4f7fc] py-2.5 pl-10 pr-4 text-sm text-[#0b0b0b] placeholder:text-[#898781] focus:border-[#2a78d6]/50 focus:outline-none focus:ring-2 focus:ring-[#2a78d6]/25";
 
-const initialState: LoginState = {};
+const initialState: RegisterState = {};
 
-export function LoginForm() {
-  const [state, formAction, pending] = useActionState(loginAction, initialState);
+export function RegisterForm() {
+  const [state, formAction, pending] = useActionState(registerAction, initialState);
 
   return (
     <div className="w-full max-w-sm">
       <Logo />
 
       <form action={formAction} className="mt-8 flex flex-col gap-5">
+        <div>
+          <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-[#0b0b0b]">
+            이름
+          </label>
+          <div className="relative">
+            <IconUser className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#898781]" />
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="홍길동"
+              className={inputClasses}
+            />
+          </div>
+        </div>
+
         <div>
           <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[#0b0b0b]">
             이메일
@@ -46,38 +63,29 @@ export function LoginForm() {
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
-              placeholder="비밀번호를 입력해 주세요"
+              autoComplete="new-password"
+              placeholder="8자 이상 입력해 주세요"
               className={inputClasses}
             />
           </div>
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label htmlFor="otp" className="block text-sm font-medium text-[#0b0b0b]">
-              OTP 입력
-            </label>
-            <a href="#" className="text-xs font-medium text-[#d03b3b] hover:underline">
-              OTP 등록하기
-            </a>
-          </div>
+          <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-[#0b0b0b]">
+            비밀번호 확인
+          </label>
           <div className="relative">
-            <IconShieldCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#898781]" />
+            <IconLock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#898781]" />
             <input
-              id="otp"
-              type="text"
-              inputMode="numeric"
-              placeholder="6자리 인증번호 (선택)"
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="비밀번호를 다시 입력해 주세요"
               className={inputClasses}
             />
           </div>
         </div>
-
-        <label className="flex items-center gap-2 text-sm text-[#52514e]">
-          <input type="checkbox" className="h-4 w-4 rounded border-[#c3c2b7] accent-[#2a78d6]" />
-          이메일 저장
-        </label>
 
         {state.error && (
           <p className="rounded-lg bg-[#d03b3b]/10 px-3 py-2 text-sm text-[#d03b3b]">{state.error}</p>
@@ -88,13 +96,13 @@ export function LoginForm() {
           disabled={pending}
           className="w-full rounded-xl bg-[#2a78d6] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1c5cab] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {pending ? "로그인 중..." : "로그인"}
+          {pending ? "계정 생성 중..." : "계정 만들기"}
         </button>
 
         <p className="text-center text-sm text-[#52514e]">
-          계정이 없으신가요?{" "}
-          <Link href="/register" className="font-medium text-[#2a78d6] hover:underline">
-            회원가입
+          이미 계정이 있으신가요?{" "}
+          <Link href="/" className="font-medium text-[#2a78d6] hover:underline">
+            로그인
           </Link>
         </p>
       </form>

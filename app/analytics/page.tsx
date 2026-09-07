@@ -98,6 +98,7 @@ export default async function AnalyticsPage({
             rightControl={<RangePicker />}
             userName={session.user.name}
             userRole={session.user.role}
+            userAvatarUrl={session.user.avatarUrl}
           />
 
           <StatCards stats={stats} />

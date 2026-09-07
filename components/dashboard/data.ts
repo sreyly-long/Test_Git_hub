@@ -1,8 +1,12 @@
+export type StatCardTheme = "blue" | "green" | "pink" | "violet";
+
 export type StatCard = {
   label: string;
   value: string;
   deltaPct: number;
   direction: "up" | "down";
+  icon: "dollar" | "calendar" | "checkIn" | "checkOut";
+  iconTheme: StatCardTheme;
 };
 
 export type RoomOccupancySegment = {

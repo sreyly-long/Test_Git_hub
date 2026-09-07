@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const palette = [
   "bg-[#2a78d6]/10 text-[#184f95]",
   "bg-[#0ca30c]/10 text-[#006300]",
@@ -16,7 +18,23 @@ function initialsOf(name: string) {
     .join("");
 }
 
-export function Avatar({ name, className = "h-9 w-9" }: { name: string; className?: string }) {
+export function Avatar({
+  name,
+  avatarUrl,
+  className = "h-9 w-9",
+}: {
+  name: string;
+  avatarUrl?: string | null;
+  className?: string;
+}) {
+  if (avatarUrl) {
+    return (
+      <span className={`relative shrink-0 overflow-hidden rounded-full ${className}`}>
+        <Image src={avatarUrl} alt={name} fill sizes="48px" className="object-cover" />
+      </span>
+    );
+  }
+
   const hash = [...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
   const theme = palette[hash % palette.length];
 

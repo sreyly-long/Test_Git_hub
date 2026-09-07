@@ -36,3 +36,12 @@ export function IconShieldCheck({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconUser({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" className={className} {...base}>
+      <circle cx="10" cy="6.5" r="3.2" />
+      <path d="M3.5 17c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+    </svg>
+  );
+}
